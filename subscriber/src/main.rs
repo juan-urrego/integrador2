@@ -2,15 +2,24 @@ use anyhow::Result;
 use iota_streams::app_channels::api::tangle::{Transport, MessageContent, Address, Subscriber};
 use iota_streams::app::transport::tangle::client::Client;
 use std::str::FromStr;
-use std::io;
+use std::{io, thread};
+use std::time::Duration;
 use crypto::hashes::{Digest, blake2b};
+
+use rand::{
+    distributions::Uniform,
+    Rng,
+    thread_rng
+};
+
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let mut input = String::new();
+    let mut input2 = String::new();
 
     let node = "https://chrysalis-nodes.iota.org";
-    let mut subscriber = Subscriber::new("test22", Client::new_from_url(node));
+    let mut subscriber = Subscriber::new(random_seed().as_str(), Client::new_from_url(node));
     
     println!("Ingrese Ann_link:");
     io::stdin().read_line(&mut input).expect("Error al leer la entrada");
@@ -22,11 +31,10 @@ async fn main() -> Result<()> {
     println!("Subscription link: {}", sub_link.to_string());
 
     //Receive signed message
-    println!("Wait me:");
-    io::stdin().read_line(&mut input).expect("Error al leer la entrada");
-    receive_messages_for_subscriber(&mut subscriber, "Subscriber").await;
-
-    // println!("Signed message link: {}", signed_message_link.to_string());
+    loop {
+        receive_messages_for_subscriber(&mut subscriber, "Subscriber").await;  
+        thread::sleep(Duration::from_secs(5));
+    }
 
     Ok(())
 }
@@ -78,4 +86,14 @@ pub fn get_hash(link: &Address) ->  String {
     let total = [link.appinst.as_ref(), link.msgid.as_ref()].concat();
     let hash = blake2b::Blake2b256::digest(&total);
     hex::encode(&hash)
+}
+
+
+pub fn random_seed() -> String {
+    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ9".as_bytes();
+    thread_rng()
+        .sample_iter(Uniform::new(0, alphabet.len()))
+        .take(81)
+        .map(|i| alphabet[i] as char)
+        .collect()
 }
