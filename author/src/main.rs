@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     let mut i = 1;
     loop {
         println!("Enviando mensaje...");
-        let texto = "esto es un troll: ".to_owned() + &i.to_string();
+        let texto = "mensaje numero: ".to_owned() + &i.to_string();
         let public_payload = create_payload(&texto);
 
         //AQUI, LEER .TXT QUE TENDRÁ TEMPERATURAS Y PASAR COMO ARGUNMENTOS
@@ -48,7 +48,8 @@ async fn main() -> Result<()> {
         let mut content = String::new();
         file.read_to_string(&mut content).expect("Error al leer el archivo");
 
-        let masked_payload = create_payload(content.trim());
+        let mask_texto = "temperatura: ".to_owned() + content.trim();
+        let masked_payload = create_payload(&mask_texto);
         let new_link = author
             .send_signed_packet(&prev_link.0, &public_payload, &masked_payload)
             .await
